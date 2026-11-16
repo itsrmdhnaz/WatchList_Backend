@@ -46,7 +46,7 @@ export function createProfileRepository(prismaClient) {
       return { entries, totalItems };
     },
 
-    async updateProfileVisibility(publicId, userId, visibility) {
+    async updateVisibility(publicId, userId, visibility) {
       const updatedProfile = await prismaClient.user.updateMany({
         where: {
           publicId,
