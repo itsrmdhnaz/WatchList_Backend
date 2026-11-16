@@ -1,0 +1,19 @@
+meta {
+  name: Delete Library Entry
+  type: http
+  seq: 5
+}
+
+delete {
+  url: http://{{apiHost}}:{{apiPort}}{{apiPrefix}}/library/{{tmdbId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Accept: application/json
+}

@@ -1,0 +1,23 @@
+meta {
+  name: Get Current User
+  type: http
+  seq: 5
+}
+
+get {
+  url: http://{{apiHost}}:{{apiPort}}{{apiPrefix}}/auth/current-user
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Run Login first to populate the accessToken runtime variable.
+}

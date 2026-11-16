@@ -1,0 +1,34 @@
+meta {
+  name: Login
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://{{apiHost}}:{{apiPort}}{{apiPrefix}}/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "email": "{{registerEmail}}",
+    "password": "{{registerPassword}}",
+    "rememberMe": {{rememberMe}}
+  }
+}
+
+script:post-response {
+  if (res.status === 200 && res.body?.data?.accessToken) {
+    bru.setVar('accessToken', res.body.data.accessToken);
+  }
+}
+
+docs {
+  Saves the access token as a temporary Bruno runtime variable and stores the HttpOnly refresh cookie in Bruno's cookie jar.
+}

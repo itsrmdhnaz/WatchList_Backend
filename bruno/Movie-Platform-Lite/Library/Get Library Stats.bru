@@ -1,0 +1,19 @@
+meta {
+  name: Get Library Stats
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://{{apiHost}}:{{apiPort}}{{apiPrefix}}/library/stats
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Accept: application/json
+}

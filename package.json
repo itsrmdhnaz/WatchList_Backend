@@ -1,0 +1,36 @@
+{
+  "name": "movie-platform-lite",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Backend REST API katalog film Movie Platform Lite",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "vitest run",
+    "seed:movies": "node scripts/seedMovies.js"
+  },
+  "dependencies": {
+    "@prisma/adapter-better-sqlite3": "^7.10.1",
+    "@prisma/client": "^7.10.1",
+    "argon2": "^0.45.2",
+    "better-sqlite3": "^13.2.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.4",
+    "jose": "^6.2.17"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.11.1": true,
+    "better-sqlite3@13.2.0": true,
+    "prisma@7.10.1": true,
+    "@prisma/engines@7.10.1": true,
+    "argon2@0.45.2": true
+  },
+  "devDependencies": {
+    "prisma": "^7.10.1",
+    "supertest": "^7.3.2",
+    "vitest": "^5.1.0"
+  }
+}

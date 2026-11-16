@@ -1,0 +1,28 @@
+meta {
+  name: Add Library Entry
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://{{apiHost}}:{{apiPort}}{{apiPrefix}}/library
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "tmdbId": {{tmdbId}},
+    "status": "{{status}}",
+    "visibility": "{{visibility}}"
+  }
+}

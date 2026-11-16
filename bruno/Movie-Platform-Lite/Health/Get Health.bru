@@ -1,0 +1,15 @@
+meta {
+  name: Get Health
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://{{apiHost}}:{{apiPort}}/health
+  body: none
+  auth: none
+}
+
+docs {
+  Checks that the API process is responding.
+}

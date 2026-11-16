@@ -1,0 +1,20 @@
+meta {
+  name: Search Movies
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://{{apiHost}}:{{apiPort}}{{apiPrefix}}/movies/search
+  body: none
+  auth: none
+}
+
+params:query {
+  query: {{searchQuery}}
+  page: {{page}}
+}
+
+headers {
+  Accept: application/json
+}

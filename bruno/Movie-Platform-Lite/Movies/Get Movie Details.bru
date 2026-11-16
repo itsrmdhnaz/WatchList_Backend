@@ -1,0 +1,15 @@
+meta {
+  name: Get Movie Details
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://{{apiHost}}:{{apiPort}}{{apiPrefix}}/movies/{{tmdbId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}

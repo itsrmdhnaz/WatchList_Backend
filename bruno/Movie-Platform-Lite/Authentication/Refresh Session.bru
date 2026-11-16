@@ -1,0 +1,25 @@
+meta {
+  name: Refresh Session
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://{{apiHost}}:{{apiPort}}{{apiPrefix}}/auth/refresh
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+script:post-response {
+  if (res.status === 200 && res.body?.data?.accessToken) {
+    bru.setVar('accessToken', res.body.data.accessToken);
+  }
+}
+
+docs {
+  Uses the refreshToken HttpOnly cookie captured from Login. Run Login first.
+}

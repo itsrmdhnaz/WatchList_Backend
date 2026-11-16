@@ -1,0 +1,27 @@
+meta {
+  name: Update Library Entry
+  type: http
+  seq: 4
+}
+
+patch {
+  url: http://{{apiHost}}:{{apiPort}}{{apiPrefix}}/library/{{tmdbId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "status": "{{status}}",
+    "visibility": "{{visibility}}"
+  }
+}

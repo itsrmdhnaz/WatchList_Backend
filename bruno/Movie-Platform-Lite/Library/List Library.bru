@@ -1,0 +1,25 @@
+meta {
+  name: List Library
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://{{apiHost}}:{{apiPort}}{{apiPrefix}}/library
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+params:query {
+  status: {{status}}
+  page: {{page}}
+  limit: {{limit}}
+}
+
+headers {
+  Accept: application/json
+}

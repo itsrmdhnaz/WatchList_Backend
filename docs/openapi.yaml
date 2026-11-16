@@ -1,0 +1,893 @@
+openapi: 3.1.0
+info:
+  title: Movie Platform Lite API
+  version: 1.0.0
+  description: >-
+    REST API katalog film, autentikasi, koleksi, profil, dan rekomendasi.
+    Profil selalu memerlukan autentikasi. TMDB API key hanya digunakan server.
+servers:
+  - url: http://localhost:3000
+    description: Local development
+tags:
+  - name: Health
+  - name: Authentication
+  - name: Movies
+  - name: Library
+  - name: Profiles
+  - name: Recommendations
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Check service health
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthSuccess'
+
+  /api/v1/auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register an account
+      operationId: registerAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSuccess'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '403':
+          $ref: '#/components/responses/OriginError'
+        '409':
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+
+  /api/v1/auth/login:
+    post:
+      tags: [Authentication]
+      summary: Log in and create a refresh session
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login succeeded; refresh token is set in an HttpOnly cookie
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: refreshToken cookie scoped to /api/v1/auth
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginSuccess'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          $ref: '#/components/responses/OriginError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Rotate the refresh session and issue a new access token
+      operationId: refreshSession
+      security:
+        - refreshCookie: []
+      responses:
+        '200':
+          description: Refresh token rotated; new refresh token is set in the cookie
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessTokenSuccess'
+        '401':
+          description: Refresh session is invalid or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          $ref: '#/components/responses/OriginError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+
+  /api/v1/auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Revoke the presented refresh session and clear the cookie
+      operationId: logout
+      responses:
+        '200':
+          description: Session revoked if present; refresh cookie cleared
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptySuccess'
+        '403':
+          $ref: '#/components/responses/OriginError'
+
+  /api/v1/auth/current-user:
+    get:
+      tags: [Authentication]
+      summary: Return the authenticated user
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user loaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUserSuccess'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/v1/movies/search:
+    get:
+      tags: [Movies]
+      summary: Search movies through TMDB
+      operationId: searchMovies
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 200
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 1
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMovieSearchSuccess'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '502':
+          $ref: '#/components/responses/UpstreamError'
+        '503':
+          $ref: '#/components/responses/UpstreamError'
+        '504':
+          $ref: '#/components/responses/UpstreamError'
+
+  /api/v1/movies/{tmdbId}:
+    get:
+      tags: [Movies]
+      summary: Get movie details with a local cache
+      operationId: getMovieDetails
+      parameters:
+        - $ref: '#/components/parameters/TmdbId'
+      responses:
+        '200':
+          description: Movie details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieSuccess'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/UpstreamError'
+        '502':
+          $ref: '#/components/responses/UpstreamError'
+        '503':
+          $ref: '#/components/responses/UpstreamError'
+        '504':
+          $ref: '#/components/responses/UpstreamError'
+
+  /api/v1/library:
+    get:
+      tags: [Library]
+      summary: List the authenticated user's library
+      operationId: listLibrary
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StatusFilter'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Library entries and pagination metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLibrarySuccess'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    post:
+      tags: [Library]
+      summary: Add a movie to the authenticated user's library
+      operationId: addLibraryEntry
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddLibraryRequest'
+      responses:
+        '201':
+          description: Movie added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LibraryEntrySuccess'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/UpstreamError'
+        '409':
+          description: Movie is already in the library
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          $ref: '#/components/responses/UpstreamError'
+        '503':
+          $ref: '#/components/responses/UpstreamError'
+        '504':
+          $ref: '#/components/responses/UpstreamError'
+
+  /api/v1/library/stats:
+    get:
+      tags: [Library]
+      summary: Get private statistics for the authenticated user's library
+      operationId: getLibraryStats
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Counts include all of the caller's entries, including private ones
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LibraryStatsSuccess'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/v1/library/{tmdbId}:
+    patch:
+      tags: [Library]
+      summary: Update status and/or visibility on the caller's entry
+      operationId: updateLibraryEntry
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TmdbId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLibraryRequest'
+      responses:
+        '200':
+          description: Library entry updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LibraryEntrySuccess'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Entry not found in the caller's library
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [Library]
+      summary: Delete an entry from the caller's library
+      operationId: deleteLibraryEntry
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TmdbId'
+      responses:
+        '200':
+          description: Library entry deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteLibrarySuccess'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Entry not found in the caller's library
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/profiles/{publicId}:
+    get:
+      tags: [Profiles]
+      summary: Get a public profile summary
+      operationId: getProfile
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      responses:
+        '200':
+          description: Public ID and display name only
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileSuccess'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Profile not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/profiles/{publicId}/movies:
+    get:
+      tags: [Profiles]
+      summary: List profile movies within the caller's visibility scope
+      description: The profile owner sees all entries; other viewers see only public entries. Pagination totals use the same visibility scope.
+      operationId: listProfileMovies
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+        - $ref: '#/components/parameters/StatusFilter'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Visible profile movie entries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProfileMoviesSuccess'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Profile not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/recommendations/most-watched:
+    get:
+      tags: [Recommendations]
+      summary: Get Most Watched movie recommendations
+      description: Local counts include private watched entries but never expose owners. TMDB Popular is used below the configured watched-record threshold.
+      operationId: getMostWatched
+      responses:
+        '200':
+          description: Recommendation list and source metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MostWatchedSuccess'
+        '502':
+          $ref: '#/components/responses/UpstreamError'
+        '503':
+          $ref: '#/components/responses/UpstreamError'
+        '504':
+          $ref: '#/components/responses/UpstreamError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: refreshToken
+  parameters:
+    TmdbId:
+      name: tmdbId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    PublicId:
+      name: publicId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    StatusFilter:
+      name: status
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/LibraryStatus'
+    Page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 20
+  responses:
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    UnauthorizedError:
+      description: Authentication is required or credentials are invalid
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    OriginError:
+      description: Request origin is not allowed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    RateLimitError:
+      description: Authentication rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    UpstreamError:
+      description: TMDB is unavailable, returned an error, or returned invalid data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    LibraryStatus:
+      type: string
+      enum: [watched, plan_to_watch]
+    Visibility:
+      type: string
+      enum: [public, private]
+    ErrorResponse:
+      type: object
+      required: [success, message, error]
+      properties:
+        success:
+          const: false
+        message:
+          type: string
+        error:
+          type: object
+          required: [code]
+          properties:
+            code:
+              type: string
+    User:
+      type: object
+      required: [publicId, email, displayName]
+      properties:
+        publicId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+    PublicProfile:
+      type: object
+      required: [publicId, displayName]
+      properties:
+        publicId:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+    Movie:
+      type: object
+      required: [tmdbId, title, overview, releaseDate, posterPath, backdropPath, voteAverage, voteCount]
+      properties:
+        tmdbId:
+          type: integer
+        title:
+          type: string
+        overview:
+          type: [string, 'null']
+        releaseDate:
+          type: [string, 'null']
+        posterPath:
+          type: [string, 'null']
+        backdropPath:
+          type: [string, 'null']
+        voteAverage:
+          type: number
+        voteCount:
+          type: integer
+          minimum: 0
+    LibraryEntry:
+      allOf:
+        - $ref: '#/components/schemas/Movie'
+        - type: object
+          required: [status, visibility, createdAt, updatedAt]
+          properties:
+            status:
+              $ref: '#/components/schemas/LibraryStatus'
+            visibility:
+              $ref: '#/components/schemas/Visibility'
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    ProfileMovie:
+      allOf:
+        - $ref: '#/components/schemas/Movie'
+        - type: object
+          required: [status]
+          properties:
+            status:
+              $ref: '#/components/schemas/LibraryStatus'
+    PaginationMeta:
+      type: object
+      required: [page, limit, totalItems, totalPages]
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalItems:
+          type: integer
+        totalPages:
+          type: integer
+    RegisterRequest:
+      type: object
+      required: [email, password, displayName]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          minLength: 15
+          maxLength: 128
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 80
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 15
+          maxLength: 128
+        rememberMe:
+          type: boolean
+          default: false
+    AddLibraryRequest:
+      type: object
+      required: [tmdbId]
+      properties:
+        tmdbId:
+          type: integer
+          minimum: 1
+        status:
+          allOf:
+            - $ref: '#/components/schemas/LibraryStatus'
+          default: plan_to_watch
+        visibility:
+          allOf:
+            - $ref: '#/components/schemas/Visibility'
+          default: private
+    UpdateLibraryRequest:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        status:
+          $ref: '#/components/schemas/LibraryStatus'
+        visibility:
+          $ref: '#/components/schemas/Visibility'
+    HealthSuccess:
+      type: object
+      required: [success, message, data]
+      properties:
+        success:
+          const: true
+        message:
+          type: string
+        data:
+          type: object
+          required: [status]
+          properties:
+            status:
+              const: ok
+    UserSuccess:
+      type: object
+      required: [success, message, data]
+      properties:
+        success:
+          const: true
+        message:
+          type: string
+        data:
+          type: object
+          required: [user]
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+    LoginSuccess:
+      type: object
+      required: [success, message, data]
+      properties:
+        success:
+          const: true
+        message:
+          type: string
+        data:
+          type: object
+          required: [user, accessToken]
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            accessToken:
+              type: string
+    AccessTokenSuccess:
+      type: object
+      required: [success, message, data]
+      properties:
+        success:
+          const: true
+        message:
+          type: string
+        data:
+          type: object
+          required: [accessToken]
+          properties:
+            accessToken:
+              type: string
+    CurrentUserSuccess:
+      type: object
+      required: [success, message, data]
+      properties:
+        success:
+          const: true
+        message:
+          type: string
+        data:
+          type: object
+          required: [user]
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+    EmptySuccess:
+      type: object
+      required: [success, message, data]
+      properties:
+        success:
+          const: true
+        message:
+          type: string
+        data:
+          type: object
+    MovieSuccess:
+      type: object
+      required: [success, message, data]
+      properties:
+        success:
+          const: true
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/Movie'
+    PaginatedMovieSearchSuccess:
+      type: object
+      required: [success, message, data, meta]
+      properties:
+        success:
+          const: true
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Movie'
+        meta:
+          type: object
+          required: [page, totalPages, totalResults]
+          properties:
+            page:
+              type: integer
+            totalPages:
+              type: integer
+            totalResults:
+              type: integer
+    LibraryEntrySuccess:
+      type: object
+      required: [success, message, data]
+      properties:
+        success:
+          const: true
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/LibraryEntry'
+    PaginatedLibrarySuccess:
+      type: object
+      required: [success, message, data, meta]
+      properties:
+        success:
+          const: true
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LibraryEntry'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    LibraryStatsSuccess:
+      type: object
+      required: [success, message, data]
+      properties:
+        success:
+          const: true
+        message:
+          type: string
+        data:
+          type: object
+          required: [total, watched, planToWatch]
+          properties:
+            total:
+              type: integer
+            watched:
+              type: integer
+            planToWatch:
+              type: integer
+    DeleteLibrarySuccess:
+      type: object
+      required: [success, message, data]
+      properties:
+        success:
+          const: true
+        message:
+          type: string
+        data:
+          type: object
+          required: [tmdbId, deleted]
+          properties:
+            tmdbId:
+              type: integer
+            deleted:
+              const: true
+    ProfileSuccess:
+      type: object
+      required: [success, message, data]
+      properties:
+        success:
+          const: true
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/PublicProfile'
+    PaginatedProfileMoviesSuccess:
+      type: object
+      required: [success, message, data, meta]
+      properties:
+        success:
+          const: true
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfileMovie'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    MostWatchedSuccess:
+      type: object
+      required: [success, message, data, meta]
+      properties:
+        success:
+          const: true
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/Movie'
+              - type: object
+                properties:
+                  watchedCount:
+                    type: integer
+                    minimum: 1
+        meta:
+          type: object
+          required: [source]
+          properties:
+            source:
+              type: string
+              enum: [local_most_watched, tmdb_popular]

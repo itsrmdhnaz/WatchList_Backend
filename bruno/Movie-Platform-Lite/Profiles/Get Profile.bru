@@ -1,0 +1,23 @@
+meta {
+  name: Get Profile
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://{{apiHost}}:{{apiPort}}{{apiPrefix}}/profiles/{{publicId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Run Register Account or set publicId in the local environment, then run Login.
+}

@@ -1,0 +1,15 @@
+meta {
+  name: Get Most Watched
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://{{apiHost}}:{{apiPort}}{{apiPrefix}}/recommendations/most-watched
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}

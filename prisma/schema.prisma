@@ -1,0 +1,176 @@
+generator client {
+  // This JavaScript generator keeps generated application code out of TypeScript.
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum LibraryStatus {
+  plan_to_watch
+  watched
+}
+
+enum Visibility {
+  public
+  private
+}
+
+model User {
+  id            Int            @id @default(autoincrement())
+  email         String         @unique
+  password      String
+  displayName   String         @map("display_name")
+  publicId      String         @unique @map("public_id")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  refreshTokens RefreshToken[]
+  movies        UserMovie[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Movie {
+  id                Int                 @id @default(autoincrement())
+  tmdbId            Int                 @unique @map("tmdb_id")
+  title             String
+  originalTitle     String?             @map("original_title")
+  overview          String?
+  releaseDate       String?             @map("release_date")
+  posterPath        String?             @map("poster_path")
+  backdropPath      String?             @map("backdrop_path")
+  voteAverage       Float               @map("vote_average")
+  voteCount         Int                 @map("vote_count")
+  tagline           String?
+  runtime           Int?
+  originalLanguage  String?             @map("original_language")
+  year              Int?
+  rating            Float?
+  director          String?
+  budget            Int?
+  revenue           Int?
+  lastSyncedAt      DateTime            @default(now()) @map("last_synced_at")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+  users             UserMovie[]
+  genres            MovieGenre[]
+  casts             MovieCast[]
+  galleries         MovieGallery[]
+  similarMovies     SimilarMovie[]
+  productionCompanies MovieProductionCompany[]
+
+  @@map("movies")
+}
+
+model Genre {
+  id        Int         @id @default(autoincrement())
+  tmdbId    Int         @unique @map("tmdb_id")
+  name      String
+  movies    MovieGenre[]
+
+  @@map("genres")
+}
+
+model MovieGenre {
+  movieId   Int      @map("movie_id")
+  genreId   Int      @map("genre_id")
+  movie     Movie    @relation(fields: [movieId], references: [id])
+  genre     Genre    @relation(fields: [genreId], references: [id])
+
+  @@id([movieId, genreId])
+  @@map("movie_genres")
+}
+
+model MovieCast {
+  id            Int     @id @default(autoincrement())
+  movieId       Int     @map("movie_id")
+  tmdbPersonId  Int     @map("tmdb_person_id")
+  name          String
+  character     String?
+  profilePath   String? @map("profile_path")
+  movie         Movie   @relation(fields: [movieId], references: [id])
+
+  @@unique([movieId, tmdbPersonId])
+  @@index([movieId])
+  @@map("movie_casts")
+}
+
+enum GalleryType {
+  poster
+  backdrop
+  logo
+}
+
+model MovieGallery {
+  id        Int         @id @default(autoincrement())
+  movieId   Int         @map("movie_id")
+  type      GalleryType
+  imagePath String      @map("image_path")
+  movie     Movie       @relation(fields: [movieId], references: [id])
+
+  @@index([movieId, type])
+  @@map("movie_galleries")
+}
+
+model SimilarMovie {
+  id          Int     @id @default(autoincrement())
+  movieId     Int     @map("movie_id")
+  tmdbId      Int     @map("tmdb_id")
+  title       String
+  posterPath  String? @map("poster_path")
+  movie       Movie   @relation(fields: [movieId], references: [id])
+
+  @@unique([movieId, tmdbId])
+  @@index([movieId])
+  @@map("similar_movies")
+}
+
+model ProductionCompany {
+  id         Int                       @id @map("tmdb_id")
+  name       String
+  logoPath   String?                   @map("logo_path")
+  movies     MovieProductionCompany[]
+
+  @@map("production_companies")
+}
+
+model MovieProductionCompany {
+  movieId             Int                @map("movie_id")
+  productionCompanyId  Int                @map("production_company_id")
+  movie               Movie              @relation(fields: [movieId], references: [id])
+  productionCompany   ProductionCompany @relation(fields: [productionCompanyId], references: [id])
+
+  @@id([movieId, productionCompanyId])
+  @@map("movie_production_companies")
+}
+
+model UserMovie {
+  id         Int           @id @default(autoincrement())
+  userId     Int           @map("user_id")
+  movieId    Int           @map("movie_id")
+  status     LibraryStatus
+  visibility Visibility
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+  user       User          @relation(fields: [userId], references: [id])
+  movie      Movie         @relation(fields: [movieId], references: [id])
+
+  @@unique([userId, movieId])
+  @@index([userId, status, visibility])
+  @@index([status, movieId])
+  @@map("user_movies")
+}

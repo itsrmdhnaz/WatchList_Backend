@@ -1,0 +1,19 @@
+meta {
+  name: Logout
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://{{apiHost}}:{{apiPort}}{{apiPrefix}}/auth/logout
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Revokes the refresh session associated with the cookie jar and clears the cookie.
+}
