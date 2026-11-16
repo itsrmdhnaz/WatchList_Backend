@@ -1,10 +1,11 @@
 import AppError from '../core/errors/AppError.js';
+import { env } from '../src/config/env.js';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/u;
-const MIN_PASSWORD_LENGTH = 15;
-const MAX_PASSWORD_LENGTH = 128;
-const MAX_PASSWORD_BYTES = 1024;
-const MAX_DISPLAY_NAME_LENGTH = 80;
+const MIN_PASSWORD_LENGTH = env.minPasswordLength ?? 5;
+const MAX_PASSWORD_LENGTH = env.maxPasswordLength ?? 128;
+const MAX_PASSWORD_BYTES = env.maxPasswordBytes ?? 256;
+const MAX_DISPLAY_NAME_LENGTH = env.maxDisplayNameLength ?? 80;
 
 function invalidRequest() {
   return new AppError('Request data is invalid.', {

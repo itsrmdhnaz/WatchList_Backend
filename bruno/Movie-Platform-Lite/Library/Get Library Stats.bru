@@ -5,15 +5,15 @@ meta {
 }
 
 get {
-  url: http://{{apiHost}}:{{apiPort}}{{apiPrefix}}/library/stats
+  url: {{apiHost}}{{apiPort}}{{apiPrefix}}/library/stats
   body: none
   auth: bearer
 }
 
-auth:bearer {
-  token: {{accessToken}}
-}
-
 headers {
   Accept: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
 }

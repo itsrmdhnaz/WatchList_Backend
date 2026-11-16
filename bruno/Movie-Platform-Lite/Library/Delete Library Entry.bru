@@ -5,15 +5,15 @@ meta {
 }
 
 delete {
-  url: http://{{apiHost}}:{{apiPort}}{{apiPrefix}}/library/{{tmdbId}}
+  url: {{apiHost}}{{apiPort}}{{apiPrefix}}/library/{{tmdbId}}
   body: none
   auth: bearer
 }
 
-auth:bearer {
-  token: {{accessToken}}
-}
-
 headers {
   Accept: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
 }

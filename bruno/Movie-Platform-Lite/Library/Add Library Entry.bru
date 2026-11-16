@@ -5,18 +5,18 @@ meta {
 }
 
 post {
-  url: http://{{apiHost}}:{{apiPort}}{{apiPrefix}}/library
+  url: {{apiHost}}{{apiPort}}{{apiPrefix}}/library
   body: json
   auth: bearer
-}
-
-auth:bearer {
-  token: {{accessToken}}
 }
 
 headers {
   Content-Type: application/json
   Accept: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
 }
 
 body:json {

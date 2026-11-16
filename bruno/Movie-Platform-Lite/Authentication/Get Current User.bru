@@ -5,17 +5,17 @@ meta {
 }
 
 get {
-  url: http://{{apiHost}}:{{apiPort}}{{apiPrefix}}/auth/current-user
+  url: {{apiHost}}{{apiPort}}{{apiPrefix}}/auth/current-user
   body: none
   auth: bearer
 }
 
-auth:bearer {
-  token: {{accessToken}}
-}
-
 headers {
   Accept: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
 }
 
 docs {

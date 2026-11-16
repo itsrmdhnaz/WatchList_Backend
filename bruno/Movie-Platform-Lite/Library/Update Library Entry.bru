@@ -5,18 +5,18 @@ meta {
 }
 
 patch {
-  url: http://{{apiHost}}:{{apiPort}}{{apiPrefix}}/library/{{tmdbId}}
+  url: {{apiHost}}{{apiPort}}{{apiPrefix}}/library/{{tmdbId}}
   body: json
   auth: bearer
-}
-
-auth:bearer {
-  token: {{accessToken}}
 }
 
 headers {
   Content-Type: application/json
   Accept: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
 }
 
 body:json {
