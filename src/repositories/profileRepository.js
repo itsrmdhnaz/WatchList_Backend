@@ -45,5 +45,23 @@ export function createProfileRepository(prismaClient) {
 
       return { entries, totalItems };
     },
+
+    async updateProfileVisibility(publicId, userId, visibility) {
+      const updatedProfile = await prismaClient.user.updateMany({
+        where: {
+          publicId,
+          id: userId,
+        },
+        data: {
+          visibility,
+        },
+      });
+
+      if (updatedProfile.count === 0) {
+        throw new Error('Profile not found or user does not have permission to update visibility.');
+      }
+
+      return updatedProfile;
+    }
   });
 }

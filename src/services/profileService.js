@@ -63,5 +63,24 @@ export function createProfileService({ profileRepository }) {
         },
       };
     },
+
+    async updateProfileVisibility(publicId, userId) {
+      const profile = await profileRepository.findByPublicId(publicId);
+      if (!profile) {
+        throw new AppError('Profile was not found.', {
+          statusCode: 404,
+          code: 'PROFILE_NOT_FOUND',
+        });
+      }
+
+      if (profile.id !== userId) {
+        throw new AppError('You are not the owner of this profile.', {
+          statusCode: 403,
+          code: 'FORBIDDEN',
+        });
+      }
+
+      await profileRepository.updateVisibility(publicId, userId, profile.visibility === 'public' ? 'private' : 'public');
+    },    
   });
 }

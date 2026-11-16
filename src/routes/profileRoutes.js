@@ -10,5 +10,6 @@ export function createProfileRoutes(controller) {
   const router = Router();
   router.get('/:publicId/movies', requireAuth, validatePublicId, validateProfileMoviesQuery, controller.getMovies);
   router.get('/:publicId', requireAuth, validatePublicId, controller.getProfile);
+  router.patch('/:publicId/visibility', requireAuth, validatePublicId, controller.updateVisibility);
   return router;
 }
