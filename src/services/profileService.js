@@ -4,6 +4,7 @@ function toProfile(profile) {
   return {
     publicId: profile.publicId,
     displayName: profile.displayName,
+    visibility: profile.visibility,
   };
 }
 
@@ -80,7 +81,7 @@ export function createProfileService({ profileRepository }) {
         });
       }
 
-      await profileRepository.updateVisibility(publicId, userId, profile.visibility === 'public' ? 'private' : 'public');
+      return await profileRepository.updateVisibility(publicId, userId, profile.visibility === 'public' ? 'private' : 'public');
     },    
   });
 }

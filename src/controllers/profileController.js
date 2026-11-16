@@ -25,10 +25,10 @@ export function createProfileController(profileService) {
     },
 
     async updateVisibility(req, res) {
-      await profileService.updateProfileVisibility(req.publicId, req.auth.userId);
+      const profile = await profileService.updateProfileVisibility(req.publicId, req.auth.userId);
 
       return res.status(200).json(
-        Response.success(null, { message: 'Profile visibility updated successfully.' }),
+        Response.success(profile, { message: 'Profile visibility updated successfully.' }),
       );
     }
   });

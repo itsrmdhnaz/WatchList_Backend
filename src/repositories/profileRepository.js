@@ -15,8 +15,10 @@ export function createProfileRepository(prismaClient) {
 
     async findMovies({ publicId, includePrivate, status, skip, take }) {
       const where = {
-        user: { publicId },
-        ...(includePrivate ? {} : { visibility: 'public' }),
+        user: {
+          publicId,
+          ...(includePrivate ? {} : { visibility: 'public' }),
+        },
         ...(status ? { status } : {}),
       };
       const [entries, totalItems] = await prismaClient.$transaction([
@@ -48,10 +50,16 @@ export function createProfileRepository(prismaClient) {
     },
 
     async updateVisibility(publicId, userId, visibility) {
-      const updatedProfile = await prismaClient.user.updateMany({
+      const updatedProfile = await prismaClient.user.update({
         where: {
-          publicId,
           id: userId,
+          publicId,
+        },
+        select: {
+          id: true,
+          publicId: true,
+          displayName: true,
+          visibility: true,
         },
         data: {
           visibility,
