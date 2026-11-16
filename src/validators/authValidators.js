@@ -1,5 +1,5 @@
 import AppError from '../core/errors/AppError.js';
-import { env } from '../src/config/env.js';
+import { env } from '../config/env.js';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/u;
 const MIN_PASSWORD_LENGTH = env.minPasswordLength ?? 5;
