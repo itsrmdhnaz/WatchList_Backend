@@ -8,6 +8,7 @@ export function createProfileRepository(prismaClient) {
           id: true,
           publicId: true,
           displayName: true,
+          visibility: true,
         },
       });
     },
