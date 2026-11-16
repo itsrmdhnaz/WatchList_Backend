@@ -56,7 +56,6 @@ export function createProfileRepository(prismaClient) {
           publicId,
         },
         select: {
-          id: true,
           publicId: true,
           displayName: true,
           visibility: true,
