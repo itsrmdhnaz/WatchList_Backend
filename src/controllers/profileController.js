@@ -3,10 +3,16 @@ import Response from '../core/response/Response.js';
 /** @param {ReturnType<import('../services/profileService.js').createProfileService>} profileService */
 export function createProfileController(profileService) {
   return Object.freeze({
-    async getProfile(req, res) {
-      const profile = await profileService.getProfile(req.publicId);
+   async getProfile(req, res) {
+      const profile = await profileService.getProfile(
+        req.publicId,
+        req.auth.userId,
+      );
+
       return res.status(200).json(
-        Response.success(profile, { message: 'Profile loaded successfully.' }),
+        Response.success(profile, {
+          message: 'Profile loaded successfully.',
+        }),
       );
     },
 

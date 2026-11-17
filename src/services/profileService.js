@@ -25,12 +25,22 @@ function toPublicMovieEntry(entry) {
 /** @param {{ profileRepository: ReturnType<import('../repositories/profileRepository.js').createProfileRepository> }} dependencies */
 export function createProfileService({ profileRepository }) {
   return Object.freeze({
-    async getProfile(publicId) {
+    async getProfile(publicId, requestingUserId) {
       const profile = await profileRepository.findByPublicId(publicId);
+
       if (!profile) {
         throw new AppError('Profile was not found.', {
           statusCode: 404,
           code: 'PROFILE_NOT_FOUND',
+        });
+      }
+
+      const isOwner = profile.id === requestingUserId;
+
+      if (!isOwner && profile.visibility === 'private') {
+        throw new AppError('This profile is private.', {
+          statusCode: 403,
+          code: 'PROFILE_PRIVATE',
         });
       }
 
