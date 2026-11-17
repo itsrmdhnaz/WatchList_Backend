@@ -18,7 +18,7 @@ jobs:
   deploy:
     name: Deploy to AWS EC2
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
 
     steps:
       - name: Configure AWS Credentials
@@ -37,8 +37,8 @@ jobs:
           COMMAND_ID=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets "Key=tag:Name,Values=watch-api-production-ec2" \
-            --parameters 'commands=["/usr/local/lib/watch-api/deploy.sh"]' \
-            --timeout-seconds 1800 \
+            --parameters '{"commands":["/usr/local/lib/watch-api/deploy.sh"],"executionTimeout":["1800"]}' \
+            --timeout-seconds 300 \
             --comment "GitHub Actions production deployment" \
             --query "Command.CommandId" \
             --output text)
@@ -62,7 +62,7 @@ jobs:
           STATUS=""
           DEPLOYMENT_SUCCEEDED=false
 
-          for attempt in $(seq 1 190); do
+          for attempt in $(seq 1 220); do
             INSTANCE_ID=$(aws ssm list-command-invocations \
               --command-id "$COMMAND_ID" \
               --query "CommandInvocations[0].InstanceId" \
