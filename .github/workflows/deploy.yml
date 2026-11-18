@@ -118,3 +118,24 @@ jobs:
             --output text
 
           echo "Deployment completed successfully."
+      - name: Verify AWS OIDC Configuration
+        uses: actions/github-script@v7
+        env:
+          AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+        with:
+          script: |
+            const roleArn = process.env.AWS_ROLE_ARN;
+
+            if (!roleArn) {
+              core.setFailed("AWS_ROLE_ARN is empty or unavailable.");
+              return;
+            }
+
+            core.info(`AWS_ROLE_ARN: ${roleArn}`);
+
+            try {
+              const token = await core.getIDToken("sts.amazonaws.com");
+              core.info(`OIDC token acquired successfully (${token.length} characters).`);
+            } catch (error) {
+              core.setFailed(`Failed to acquire OIDC token: ${error.message}`);
+            }
